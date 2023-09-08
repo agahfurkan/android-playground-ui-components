@@ -1,4 +1,4 @@
-package com.agah.furkan.ui.components.component
+package com.agah.furkan.ui.components
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
@@ -29,7 +29,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.agah.furkan.core.ui.R
 import com.agah.furkan.ui.components.theme.seed
 
 @Composable

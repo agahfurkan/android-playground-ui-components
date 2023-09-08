@@ -1,4 +1,4 @@
-package com.agah.furkan.ui.components.component
+package com.agah.furkan.ui.components
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
