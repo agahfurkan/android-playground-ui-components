@@ -4,12 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.agah.furkan.core.ui"
+    namespace = "com.agah.furkan.ui.components"
     compileSdk = 34
 
     defaultConfig {
         minSdk = 21
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     compileOptions {
@@ -22,10 +21,6 @@ android {
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.4.3"
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
     }
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
         kotlinOptions.jvmTarget = "1.8"

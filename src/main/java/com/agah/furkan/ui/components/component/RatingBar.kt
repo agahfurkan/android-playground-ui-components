@@ -1,4 +1,4 @@
-package com.agah.furkan.core.ui.component
+package com.agah.furkan.ui.components.component
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -22,8 +22,8 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.agah.furkan.core.ui.theme.gray
-import com.agah.furkan.core.ui.theme.orange
+import com.agah.furkan.ui.components.theme.gray
+import com.agah.furkan.ui.components.theme.orange
 import kotlin.math.cos
 import kotlin.math.sin
 

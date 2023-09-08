@@ -1,4 +1,4 @@
-package com.agah.furkan.core.ui.theme
+package com.agah.furkan.ui.components.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
