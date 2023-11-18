@@ -1,7 +1,12 @@
 package com.agah.furkan.ui.components
 
 import android.annotation.SuppressLint
+import android.app.Activity
+import android.content.Intent
+import android.content.IntentFilter
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -11,6 +16,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -22,8 +28,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Color.Companion.Transparent
-import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -33,6 +38,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.agah.furkan.AppSignatureHelper
+import com.agah.furkan.SmsBroadcastReceiver
+import com.google.android.gms.auth.api.phone.SmsRetriever
+
+private const val OTP_LENGTH = 6
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,11 +51,67 @@ fun OTPDialog(
     dialogProperties: DialogProperties = DialogProperties(),
     onDismiss: () -> Unit
 ) {
-    val otpValue by remember { mutableStateOf(arrayOf("", "", "", "", "", "")) }
+    var otpValue by remember { mutableStateOf(arrayOf("", "", "", "", "", "")) }
     val focusRequesters = remember {
-        List(otpValue.size) { FocusRequester() }
+        List(OTP_LENGTH) { FocusRequester() }
     }
     val currentFocus = remember { mutableStateOf(0) }
+    val context = LocalContext.current as Activity
+    AppSignatureHelper(context).appSignatures.forEach {
+        // get app hash key for sms
+    }
+    val launcher =
+        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            if (it.resultCode == Activity.RESULT_OK && it.data != null) {
+                val message = it.data?.getStringExtra(SmsRetriever.EXTRA_SMS_MESSAGE)
+                // used sms format is 'Your otp code is: 123456'
+                val otpCode = message?.substringAfterLast(": ")?.substringBeforeLast(" ")
+
+                otpValue = otpValue.copyOf().apply {
+                    otpCode?.forEachIndexed { index, char ->
+                        this[index] = char.toString()
+                    }
+                }
+            }
+        }
+    DisposableEffect(Unit) {
+        val client = SmsRetriever.getClient(context)
+
+        // for automatic sms verification sample
+        /*val task = client.startSmsRetriever()
+        task.addOnSuccessListener {
+            // no-op
+        }
+        task.addOnFailureListener {
+            // no-op
+        }*/
+
+        client.startSmsUserConsent(null)
+        val broadcastReceiver = SmsBroadcastReceiver()
+        broadcastReceiver.setListener(object : SmsBroadcastReceiver.SmsListener {
+            override fun onSmsReceived(message: String) {
+                // extract 6 digit code from message
+                // automatic sms verification sample
+            }
+
+            override fun onSmsTimeOut() {
+                // no-op
+            }
+
+            // for one time consent sample
+            override fun startActivityForResult(consentIntent: Intent?) {
+                consentIntent?.let {
+                    launcher.launch(it)
+                }
+            }
+        })
+        val filter = IntentFilter(SmsRetriever.SMS_RETRIEVED_ACTION)
+        context.registerReceiver(broadcastReceiver, filter)
+
+        onDispose {
+            context.unregisterReceiver(broadcastReceiver)
+        }
+    }
 
     Dialog(
         onDismissRequest = { showDialog.value = false },
@@ -71,36 +137,36 @@ fun OTPDialog(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                repeat(otpValue.size) { index ->
-                    var digit by remember {
-                        mutableStateOf(otpValue.getOrNull(index).orEmpty())
-                    }
-
+                repeat(OTP_LENGTH) { index ->
                     SimpleTextField(
-                        value = digit,
+                        value = otpValue[index],
                         onValueChange = {
-                            if (it.isNotEmpty() && index < 5) {
-                                focusRequesters[index + 1]
-                            } else {
-                                if (it.isEmpty() && index > 0) {
+                            when {
+                                it.isNotEmpty() && index < 5 -> {
+                                    focusRequesters[index + 1]
+                                }
+
+                                it.isEmpty() && index > 0 -> {
                                     focusRequesters[index - 1]
-                                } else {
+                                }
+
+                                else -> {
                                     null
-                                }?.let { focusRequester ->
-                                    /**
-                                     * workarond for java.lang.IllegalStateException: Required value was null.
-                                     * exception when value pasted from clipboard
-                                     */
-                                    try {
-                                        focusRequester.requestFocus()
-                                    } catch (ex: IllegalStateException) {
-                                        // no-op
-                                    }
+                                }
+                            }?.let { focusRequester ->
+                                /**
+                                 * workaround for java.lang.IllegalStateException: Required value was null.
+                                 * exception occurs when value pasted from clipboard
+                                 */
+                                try {
+                                    focusRequester.requestFocus()
+                                } catch (ex: IllegalStateException) {
+                                    // no-op
                                 }
                             }
-
-                            digit = it.take(1)
-                            otpValue[index] = it.take(1)
+                            otpValue = otpValue.copyOf().apply {
+                                this[index] = it.take(1)
+                            }
                         },
                         keyboardOptions = KeyboardOptions.Default.copy(
                             keyboardType = KeyboardType.Number,
@@ -108,7 +174,7 @@ fun OTPDialog(
                         ),
                         keyboardActions = KeyboardActions(
                             onDone = {
-                                if (!otpValue.any { it.isEmpty() }) {
+                                if (otpValue.isNotEmpty()) {
                                     onDismiss()
                                 }
                             }
@@ -131,14 +197,14 @@ fun OTPDialog(
                             fontSize = 20.sp,
                             textAlign = TextAlign.Center
                         ),
-                        cursorBrush = SolidColor(Transparent),
+                        //cursorBrush = SolidColor(Transparent),
                     )
                 }
             }
 
             Button(
                 onClick = {
-                    if (!otpValue.any { it.isEmpty() }) {
+                    if (otpValue.isNotEmpty()) {
                         onDismiss()
                     }
                 },
