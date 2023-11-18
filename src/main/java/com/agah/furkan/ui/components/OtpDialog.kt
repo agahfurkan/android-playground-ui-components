@@ -23,11 +23,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Color.Companion.Transparent
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -44,7 +49,7 @@ import com.google.android.gms.auth.api.phone.SmsRetriever
 
 private const val OTP_LENGTH = 6
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun OTPDialog(
     showDialog: MutableState<Boolean>,
@@ -55,7 +60,6 @@ fun OTPDialog(
     val focusRequesters = remember {
         List(OTP_LENGTH) { FocusRequester() }
     }
-    val currentFocus = remember { mutableStateOf(0) }
     val context = LocalContext.current as Activity
     AppSignatureHelper(context).appSignatures.forEach {
         // get app hash key for sms
@@ -141,29 +145,18 @@ fun OTPDialog(
                     SimpleTextField(
                         value = otpValue[index],
                         onValueChange = {
-                            when {
-                                it.isNotEmpty() && index < 5 -> {
-                                    focusRequesters[index + 1]
+                            /**
+                             * workaround for java.lang.IllegalStateException: Required value was null.
+                             * exception occurs when value pasted from clipboard
+                             */
+                            try {
+                                if (index < OTP_LENGTH - 1) {
+                                    focusRequesters[index + 1].requestFocus()
                                 }
-
-                                it.isEmpty() && index > 0 -> {
-                                    focusRequesters[index - 1]
-                                }
-
-                                else -> {
-                                    null
-                                }
-                            }?.let { focusRequester ->
-                                /**
-                                 * workaround for java.lang.IllegalStateException: Required value was null.
-                                 * exception occurs when value pasted from clipboard
-                                 */
-                                try {
-                                    focusRequester.requestFocus()
-                                } catch (ex: IllegalStateException) {
-                                    // no-op
-                                }
+                            } catch (ex: IllegalStateException) {
+                                // no-op
                             }
+
                             otpValue = otpValue.copyOf().apply {
                                 this[index] = it.take(1)
                             }
@@ -188,16 +181,21 @@ fun OTPDialog(
                                 shape = RoundedCornerShape(10.dp)
                             )
                             .focusRequester(focusRequesters[index])
-                            .onFocusChanged {
-                                if (it.isCaptured) {
-                                    currentFocus.value = index
+                            .onKeyEvent {
+                                if (it.key == Key.Backspace) {
+                                    if (index > 0) {
+                                        focusRequesters[index - 1].requestFocus()
+                                    }
+                                    true
+                                } else {
+                                    false
                                 }
                             },
                         textStyle = androidx.compose.ui.text.TextStyle.Default.copy(
                             fontSize = 20.sp,
                             textAlign = TextAlign.Center
                         ),
-                        //cursorBrush = SolidColor(Transparent),
+                        cursorBrush = SolidColor(Transparent),
                     )
                 }
             }
