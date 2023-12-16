@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun SearchTextField(
     modifier: Modifier = Modifier,
+    value: String,
     onFocusChanged: (focusState: FocusState) -> Unit,
     onValueChange: (String) -> Unit
 ) {
@@ -36,7 +37,7 @@ fun SearchTextField(
                 .fillMaxWidth()
                 .height(24.dp)
                 .onFocusChanged(onFocusChanged),
-            value = "",
+            value = value,
             onValueChange = onValueChange,
             placeholderText = stringResource(id = R.string.search),
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = "") }
@@ -47,5 +48,5 @@ fun SearchTextField(
 @Preview
 @Composable
 fun SearchTextFieldPreview() {
-    SearchTextField(onFocusChanged = {}, onValueChange = {})
+    SearchTextField(value = "", onFocusChanged = {}, onValueChange = {})
 }
