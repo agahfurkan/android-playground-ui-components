@@ -19,7 +19,8 @@ import androidx.compose.ui.window.PopupProperties
 fun AutoCompleteTextView(
     modifier: Modifier = Modifier,
     onValueChange: (TextFieldValue) -> Unit = {},
-    options: List<String>
+    options: List<String>,
+    onItemSelected: (String) -> Unit = {}
 ) {
     val textFieldValue = remember {
         mutableStateOf(TextFieldValue())
@@ -70,6 +71,7 @@ fun AutoCompleteTextView(
                         text = text,
                         selection = TextRange(text.length)
                     )
+                    onItemSelected(text)
                 }, text = { Text(text = text) })
             }
         }
