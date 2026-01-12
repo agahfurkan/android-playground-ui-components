@@ -4,12 +4,16 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose") version "2.0.0"
 }
 
+kotlin {
+    jvmToolchain(17)
+}
+
 android {
     namespace = "com.agah.furkan.ui.components"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
-        minSdk = 21
+        minSdk = 23
     }
 
     compileOptions {
@@ -19,9 +23,6 @@ android {
 
     buildFeatures {
         compose = true
-    }
-    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-        kotlinOptions.jvmTarget = "17"
     }
 }
 

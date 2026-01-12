@@ -8,7 +8,13 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -43,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.content.ContextCompat
 import com.agah.furkan.AppSignatureHelper
 import com.agah.furkan.SmsBroadcastReceiver
 import com.google.android.gms.auth.api.phone.SmsRetriever
@@ -110,7 +117,12 @@ fun OTPDialog(
             }
         })
         val filter = IntentFilter(SmsRetriever.SMS_RETRIEVED_ACTION)
-        context.registerReceiver(broadcastReceiver, filter)
+        ContextCompat.registerReceiver(
+            context,
+            broadcastReceiver,
+            filter,
+            ContextCompat.RECEIVER_EXPORTED
+        )
 
         onDispose {
             context.unregisterReceiver(broadcastReceiver)
